@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic Template</title>
+<style>
+body{
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: black;
+  
+}
+canvas {
+  // border: 2px solid #000;
+  background-color: white;
+}
+</style>
+</head>
+
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+ 
+
+function resizeCanvas() {
+  var WIDTH = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  var HEIGHT = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  canvas.width=WIDTH;
+  canvas.height=HEIGHT;
+}
+
+
+setTimeout(function (){
+resizeCanvas()
+
+},100);
+titleScreen=true;
+bottle=null;
+sad = null ;
+good= null;
+pills = [];
+badP=0;
+goodP=0;
+score=0;
+function start(){
+ bottle= draw_set_image('bottle.png');
+bad= draw_set_image('sad_pill.png');
+good= draw_set_image('happy_pill.png');
+
+ for(let i =0;i<10;i++){
+ let temp ={
+ x: random(canvas.width),
+ y:32,
+ w:32,
+ h:32,
+ spr:choose(good,bad),
+ speed:random(1)+0.1,
+ rot: random(360),
+ ox:16,
+ oy:16
+ }
+ pills.push(temp);
+ }
+ 
+ }
+trot = 0; 
+bx=canvas.width/2
+bd=2
+function loop(){
+if(titleScreen==true){
+run=false;
+draw_set_color(255,255,255)
+draw_rectangle(0,0 , canvas.width, canvas.height,false,0,0,0)
+draw_image(good,canvas.width/4,100,32,32,trot+=5,16,16)
+draw_set_color(0,255,0)
+draw_centered_text(canvas.width/4, 140, "GOOD", 24)
+draw_image(bad,canvas.width/4*3,100,32,32,-trot,16,16)
+draw_set_color(255,0,0)
+draw_centered_text(canvas.width/4*3, 140, "BAD", 24)
+draw_image(bottle,bx+=bd,400,96,96,0,48,48)
+if(bx>canvas.width){bd = -2}
+if(bx<0){ bd = 2}
+draw_set_color(0,0,0)
+draw_centered_text(canvas.width/2, canvas.height/2, "Dr. Drug Catcher", 34)
+draw_centered_text(canvas.width/2, canvas.height/2+40, "Touch screen to play", 14)
+
+if(mouse_check_pressed()){
+run=true;
+titleScreen=false;
+requestFullscreen();
+ 
+   } 
+}else{
+if(badP+goodP==50){
+draw_set_color(255,255,255);
+run=false;
+draw_rectangle(0,0 , canvas.width, canvas.height,false,0,0,0)
+
+
+draw_set_color(255,0,0)
+draw_centered_text(canvas.width/2, canvas.height/2, "GAME OVER", 34);
+draw_set_color(0,0,255)
+draw_centered_text(canvas.width/2, canvas.height/2+40,  getScoreLine(goodP*2),12)
+}
+
+   }
+}
+
+function draw(){
+draw_set_color(0,128,255);
+draw_set_linedash([3,1]);
+draw_set_linewidth(8);
+draw_rectangle(4,4, canvas.width-8, canvas.height-8,true,0,0,0);
+draw_image(bottle,mouse_x,400,96,96,0,48,48)
+// update draw pills
+for(let i =0;i<pills.length;i++){ 
+pills[i].rot+=5*pills[i].speed;
+pills[i].y+=pills[i].speed;
+pills[i].speed+= 0.005;
+draw_image(pills[i].spr,pills[i].x,pills[i].y,32,32,pills[i].rot,16,16)
+
+// in the bottle
+if(in_bottle(pills[i])==true){
+if(pills[i].spr==good){
+goodP++;
+}
+if(pills[i].spr==bad){
+badP++;
+}
+pills[i].y=0-random(96);
+pills[i].speed=random(1);
+pills[i].spr = choose(good,bad);
+}
+// off the bottom of screen
+if(pills[i].y>canvas.height+32){
+pills[i].y=0-random(96);
+pills[i].speed=random(1);
+pills[i].spr = choose(good,bad);
+}
+}
+
+
+
+
+
+
+}
+
+function in_bottle(obj){
+
+if(obj.x>mouse_x-48 && obj.x<mouse_x+48 && obj.y>400-50 && obj.y<400-48){
+return true;
+}else{
+return false;
+}
+
+}
+
+function getScoreLine(score) {
+  // Round down to the nearest 5%
+  const roundedScore = Math.floor(score / 5) * 5;
+
+  // Define the lines
+  const lines = {
+    0: "You're a pill bottle, not a trash can!",
+    5: "Spilled more drugs than you caught—ouch.",
+    10: "Technically, you caught *something*.",
+    15: "Not the worst, but close enough.",
+    20: "You’re a hazard to healthcare.",
+    25: "Mediocre at medicine, but great at mayhem!",
+    30: "You caught a few—didn’t say they were the right ones.",
+    35: "At least the bad pills got some exercise.",
+    40: "You're almost half as good as decent.",
+    45: "They won’t revoke your license… yet.",
+    50: "Flip a coin—you're just as effective.",
+    55: "You’re more good than bad—barely.",
+    60: "You’re getting the hang of this... sort of.",
+    65: "Not bad! The pharmacy might keep you on night shift.",
+    70: "A solid effort—patients might actually survive!",
+    75: "You’re catching on like a pro! (Mostly.)",
+    80: "Pharma hero in the making—keep it up!",
+    85: "Almost flawless! Dr. Pillworthy would be proud.",
+    90: "Medicinal mastery! You crushed it (not literally)!",
+    95: "You’re the pill bottle of legends!",
+    100: "Pure perfection! You’re a pharmaceutical god!"
+  };
+
+  // Return the line for the rounded score, or a default message
+  return `${score}% - ${lines[roundedScore] || "Invalid score!"}`;
+}
+
+
+
+</script>
+<script type='text/javascript' src='engine.js'></script>
+
+</body>
+</html>
